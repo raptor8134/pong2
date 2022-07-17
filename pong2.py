@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
-
 import pygame
 import sys
 import random 
+import math
+
+ #############
+### Classes ###
+ #############
 
 class Ball():
     def __init__(self, speed: int):
@@ -16,7 +20,7 @@ class Ball():
         random.shuffle(self.velocity)
         # center the ball
         c = self.coords
-        self.coords.move_ip((width-c.w)//2, (width-c.h)//2)
+        c.center = (width//2, height//2)
     def move(self):
         c = self.coords
         v = self.velocity
@@ -70,8 +74,14 @@ class Paddle():
             r.move_ip([-pspeed, 0][::flip])
         if keymap[self.keys[1]] and utest < width - 2*self.pw:
             r.move_ip([pspeed, 0][::flip])
-    def render(self, surface):
+    def reflect(self, ball: Ball):
+        pass
+    def render(self, surface: pygame.Surface):
         pygame.draw.rect(surface, white, self.rect)
+
+ ####################
+### Initialization ###
+ ####################
 
 # initialize pygame and set options
 pygame.display.init()
@@ -90,11 +100,11 @@ black = 0, 0, 0
 white = 225, 225, 225
 
 # create the ball object
-ball = Ball(5)
+ball = Ball(6)
 ball.reset()
 
 # create the four paddle objects
-pspeed = 10
+pspeed = 9
 pwidth, plen = 16, 128
 paddle_top    = Paddle(pwidth, plen, "top",    pspeed, (pygame.K_a,    pygame.K_d))
 paddle_bottom = Paddle(pwidth, plen, "bottom", pspeed, (pygame.K_LEFT, pygame.K_RIGHT))
@@ -102,20 +112,28 @@ paddle_left   = Paddle(pwidth, plen, "left",   pspeed, (pygame.K_w,    pygame.K_
 paddle_right  = Paddle(pwidth, plen, "right",  pspeed, (pygame.K_UP,   pygame.K_DOWN))
 
 # list helps us check if the ball has collided with any of these
-paddle_rects = [x.rect for x in [paddle_top, paddle_bottom, paddle_left, paddle_right]]
+paddles = [paddle_top, paddle_bottom, paddle_left, paddle_right]
 
+# now run the game forever
 while True: 
-    # handle events
+
+ ################
+### Game Logic ###
+ ################
+
+    # check for quit and score reset events
     for event in pygame.event.get():
-        # check if the X button on the window bar or the q key
-        # have been pressed, if yes, then exit
         if event.type == pygame.QUIT or \
         (event.type == pygame.KEYDOWN and event.key == pygame.K_q):
             pygame.font.quit()
             pygame.display.quit()
-            sys.exit()
+            sys.exit() # cleans up any remaining windows better than regular exit()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_r:
+                wasd_score = 0 
+                akey_score = 0
 
-    # check for all other keys
+    # paddle movement
     # top/left are WASD, bottom/right are arrow keys
     keys = pygame.key.get_pressed()
     paddle_top.move(keys)
@@ -123,8 +141,25 @@ while True:
     paddle_left.move(keys)
     paddle_right.move(keys)
 
-    # move the ball
+    # ball movement
     ball.move()
+
+    # check if the ball hit the paddles and reflect it
+    paddle = paddles[ball.coords.collidelist([x.rect for x in paddles])]
+    paddle.reflect(ball)
+
+    # check if the ball went out
+    if ball.coords.midleft[0] < 0 or ball.coords.midtop[1] < 0:
+        akey_score += 1
+        ball.reset()
+    if ball.coords.midright[0] > width or ball.coords.midbottom[1] > height:
+        wasd_score += 1 
+        ball.reset()
+
+
+ ###############
+### Rendering ###
+ ###############
 
     # reset the canvas
     screen.fill(black)
@@ -141,9 +176,8 @@ while True:
     for x in range(0, width, 2*step):
         x -= line_width/2
         pygame.draw.line(screen, white, (x,height-x), (x+step,height-(x+step)), width=line_width)
-    #pygame.draw.line(screen, white, (0,height), (width,0), width=4)
 
-    # render ball and paddles
+    # ball and paddles
     ball.render(screen)
     paddle_top.render(screen)
     paddle_bottom.render(screen)
