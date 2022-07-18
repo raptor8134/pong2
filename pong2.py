@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
+#disable pygame import message
+import os
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "True"
+
 import pygame
 import sys
 import random 
 import math
+import pyfiglet
 
  #############
 ### Classes ###
@@ -11,7 +16,7 @@ import math
 class Ball():
     def __init__(self, speed: float, radius: int):
         self.speed = speed 
-        img = pygame.Surface((2*radius,2*radius), pygame.SRCALPHA, 32)
+        img = pygame.Surface((2*radius,2*radius), pygame.SRCALPHA)
         pygame.draw.circle(img, white, (radius,radius), radius)
         self.image = img
         self.rect = self.image.get_rect()
@@ -32,7 +37,7 @@ class Ball():
             v[0] = -v[0]
         if c.top < 0 or c.bottom > height:
             v[1] = -v[1]
-        self.velocity = [x * 1.0001 for x in v]
+        self.velocity = [x * 1.0004 for x in v]
     def render(self, surface): # surface should be a surface object
         surface.blit(self.image, self.rect)
 
@@ -112,6 +117,10 @@ class Paddle():
 ### Initialization ###
  ####################
 
+# starting message
+print("")
+print(pyfiglet.Figlet(font="banner3").renderText(" PONG 2 ").replace("#", "█"))
+
 # initialize pygame and set options
 pygame.display.init()
 pygame.font.init()
@@ -134,7 +143,7 @@ ball = Ball(5, 16)
 ball.reset()
 
 # create the four paddle objects
-pspeed = 7
+pspeed = 9
 pwidth, plen = 16, 128
 paddle_top    = Paddle(pwidth, plen, "top",    pspeed, (pygame.K_a,    pygame.K_d))
 paddle_bottom = Paddle(pwidth, plen, "bottom", pspeed, (pygame.K_LEFT, pygame.K_RIGHT))
