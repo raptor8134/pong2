@@ -75,7 +75,34 @@ class Paddle():
         if keymap[self.keys[1]] and utest < width - 2*self.pw:
             r.move_ip([pspeed, 0][::flip])
     def reflect(self, ball: Ball):
-        pass
+        v = ball.velocity
+        vabs = math.sqrt(v[0]**2 + v[1]**2)
+        # radius is doubled to keep acos within bounds and going to reasonalbe
+        # angles (no 90° reflections)
+        radius = self.pl/2 * 2 
+        match self.side:
+            case "top":
+                if ball.velocity[1] < 0:
+                    angle = math.acos(
+                        (ball.coords.center[0]-self.rect.center[0]) / radius)
+                    ball.velocity = [vabs*math.cos(angle), vabs*math.sin(angle)]
+            case "bottom":
+                if ball.velocity[1] > 0:
+                    angle = math.acos(
+                            (ball.coords.center[0]-self.rect.center[0]) / radius)
+                    ball.velocity = [vabs*math.cos(angle), -vabs*math.sin(angle)]
+            case "left":
+                if ball.velocity[0] < 0:
+                    angle = math.acos(
+                            (ball.coords.center[1]-self.rect.center[1]) / radius)
+                    ball.velocity = [vabs*math.sin(angle), vabs*math.cos(angle)]
+            case "right":
+                if ball.velocity[0] > 0:
+                    angle = math.acos(
+                            (ball.coords.center[1]-self.rect.center[1]) / radius)
+                    ball.velocity = [-vabs*math.sin(angle), vabs*math.cos(angle)]
+            case _: 
+                raise Exception
     def render(self, surface: pygame.Surface):
         pygame.draw.rect(surface, white, self.rect)
 
@@ -94,17 +121,18 @@ wasd_score = 0
 akey_score = 0
 
 # initialize window and set colors
-size = width, height = (1024, 1024) # these should always be the same
+sidelen = 1024
+size = width, height = (sidelen,sidelen)
 screen = pygame.display.set_mode(size)
 black = 0, 0, 0
 white = 225, 225, 225
 
 # create the ball object
-ball = Ball(6)
+ball = Ball(5)
 ball.reset()
 
 # create the four paddle objects
-pspeed = 9
+pspeed = 7
 pwidth, plen = 16, 128
 paddle_top    = Paddle(pwidth, plen, "top",    pspeed, (pygame.K_a,    pygame.K_d))
 paddle_bottom = Paddle(pwidth, plen, "bottom", pspeed, (pygame.K_LEFT, pygame.K_RIGHT))
@@ -133,20 +161,18 @@ while True:
                 wasd_score = 0 
                 akey_score = 0
 
-    # paddle movement
+    # paddle and ball movement
     # top/left are WASD, bottom/right are arrow keys
     keys = pygame.key.get_pressed()
     paddle_top.move(keys)
     paddle_bottom.move(keys)
     paddle_left.move(keys)
     paddle_right.move(keys)
-
-    # ball movement
     ball.move()
 
     # check if the ball hit the paddles and reflect it
-    paddle = paddles[ball.coords.collidelist([x.rect for x in paddles])]
-    paddle.reflect(ball)
+    index = ball.coords.collidelist([x.rect for x in paddles])
+    if index != -1: paddles[index].reflect(ball)
 
     # check if the ball went out
     if ball.coords.midleft[0] < 0 or ball.coords.midtop[1] < 0:
@@ -156,7 +182,6 @@ while True:
         wasd_score += 1 
         ball.reset()
 
-
  ###############
 ### Rendering ###
  ###############
@@ -165,9 +190,9 @@ while True:
     screen.fill(black)
 
     # scores
-    s1 = font.render(str(wasd_score), False, white)
-    s2 = font.render(str(akey_score), False, white)
-    screen.blit(s1, (300, 300))
+    s1 = font.render(f"{wasd_score:02}", False, white)
+    s2 = font.render(f"{akey_score:02}", False, white)
+    screen.blit(s1, (200, 300))
     screen.blit(s2, (630, 630))
 
     # dotted line
