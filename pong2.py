@@ -9,20 +9,22 @@ import math
  #############
 
 class Ball():
-    def __init__(self, speed: int):
+    def __init__(self, speed: float, radius: int):
         self.speed = speed 
-        self.image = pygame.image.load("doge.png") # TODO replace with a ball
-        self.coords = self.image.get_rect()
+        img = pygame.Surface((2*radius,2*radius), pygame.SRCALPHA, 32)
+        pygame.draw.circle(img, white, (radius,radius), radius)
+        self.image = img
+        self.rect = self.image.get_rect()
     def reset(self):
         # give even preference to each paddle for starting
         random.seed()
         self.velocity = [self.speed * random.choice([-1,1]), 0]
         random.shuffle(self.velocity)
         # center the ball
-        c = self.coords
+        c = self.rect
         c.center = (width//2, height//2)
     def move(self):
-        c = self.coords
+        c = self.rect
         v = self.velocity
         c.move_ip(v)
         # check for wall collisions
@@ -32,7 +34,7 @@ class Ball():
             v[1] = -v[1]
         self.velocity = [x * 1.0001 for x in v]
     def render(self, surface): # surface should be a surface object
-        surface.blit(self.image, self.coords)
+        surface.blit(self.image, self.rect)
 
 class Paddle():
     def __init__(self, pwidth: int, plength: int, side: str, speed: int, keys: tuple):
@@ -84,22 +86,22 @@ class Paddle():
             case "top":
                 if ball.velocity[1] < 0:
                     angle = math.acos(
-                        (ball.coords.center[0]-self.rect.center[0]) / radius)
+                        (ball.rect.center[0]-self.rect.center[0]) / radius)
                     ball.velocity = [vabs*math.cos(angle), vabs*math.sin(angle)]
             case "bottom":
                 if ball.velocity[1] > 0:
                     angle = math.acos(
-                            (ball.coords.center[0]-self.rect.center[0]) / radius)
+                            (ball.rect.center[0]-self.rect.center[0]) / radius)
                     ball.velocity = [vabs*math.cos(angle), -vabs*math.sin(angle)]
             case "left":
                 if ball.velocity[0] < 0:
                     angle = math.acos(
-                            (ball.coords.center[1]-self.rect.center[1]) / radius)
+                            (ball.rect.center[1]-self.rect.center[1]) / radius)
                     ball.velocity = [vabs*math.sin(angle), vabs*math.cos(angle)]
             case "right":
                 if ball.velocity[0] > 0:
                     angle = math.acos(
-                            (ball.coords.center[1]-self.rect.center[1]) / radius)
+                            (ball.rect.center[1]-self.rect.center[1]) / radius)
                     ball.velocity = [-vabs*math.sin(angle), vabs*math.cos(angle)]
             case _: 
                 raise Exception
@@ -128,7 +130,7 @@ black = 0, 0, 0
 white = 225, 225, 225
 
 # create the ball object
-ball = Ball(5)
+ball = Ball(5, 16)
 ball.reset()
 
 # create the four paddle objects
@@ -171,14 +173,14 @@ while True:
     ball.move()
 
     # check if the ball hit the paddles and reflect it
-    index = ball.coords.collidelist([x.rect for x in paddles])
+    index = ball.rect.collidelist([x.rect for x in paddles])
     if index != -1: paddles[index].reflect(ball)
 
     # check if the ball went out
-    if ball.coords.midleft[0] < 0 or ball.coords.midtop[1] < 0:
+    if ball.rect.midleft[0] < 0 or ball.rect.midtop[1] < 0:
         akey_score += 1
         ball.reset()
-    if ball.coords.midright[0] > width or ball.coords.midbottom[1] > height:
+    if ball.rect.midright[0] > width or ball.rect.midbottom[1] > height:
         wasd_score += 1 
         ball.reset()
 
