@@ -37,7 +37,7 @@ class Ball():
             v[0] = -v[0]
         if c.top < 0 or c.bottom > height:
             v[1] = -v[1]
-        self.velocity = [x * 1.0004 for x in v]
+        self.velocity = [x * 1.0005 for x in v]
     def render(self, surface): # surface should be a surface object
         surface.blit(self.image, self.rect)
 
@@ -118,7 +118,7 @@ class Paddle():
  ####################
 
 # starting message
-print("")
+print("\n                     Now playing:\n")
 print(pyfiglet.Figlet(font="banner3").renderText(" PONG 2 ").replace("#", "█"))
 
 # initialize pygame and set options
